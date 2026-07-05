@@ -1,0 +1,2 @@
+# Ulasin---Hackathon-vibecoding-UMKM-theme
+Ulasin helps small and medium-sized businesses collect more Google reviews and build stronger relationships with their customers. By simply scanning a QR code, customers are instantly directed to your business review page, making it easier than ever to share feedback, leave ratings, and support your business growth.
