@@ -21,6 +21,16 @@ export default function App() {
     setStep((prev) => Math.max(0, prev - 1));
   };
 
+  const handleLogoClick = () => {
+    if (step > 0) {
+      const confirmReset = window.confirm("Apakah Anda ingin kembali ke halaman awal? Data yang Anda tambahkan saat ini akan hilang dan tidak tersimpan.");
+      if (confirmReset) {
+        setData({}); // Reset data
+        setStep(0);
+      }
+    }
+  };
+
   const renderStep = () => {
     switch (step) {
       case 0:
@@ -52,7 +62,7 @@ export default function App() {
               </button>
             )}
 
-            <div className="flex items-center cursor-pointer group" onClick={() => setStep(0)}>
+            <div className="flex items-center cursor-pointer group" onClick={handleLogoClick}>
               {/* Logo Icon */}
               <div className="w-10 h-10 bg-[#0F0F0F] border-2 border-[#0F0F0F] shadow-hard flex items-center justify-center group-hover:bg-[var(--color-accent)] transition-colors">
                 <MapPin className="w-5 h-5 text-white" />

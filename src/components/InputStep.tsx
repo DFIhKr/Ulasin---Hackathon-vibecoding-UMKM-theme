@@ -1,21 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StepProps } from "../types";
-import { Search, Store, Info, ArrowRight, ShieldCheck, HelpCircle } from "lucide-react";
+import { Search, Store, Info, ArrowRight, ShieldCheck, HelpCircle, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export function InputStep({ onNext, data }: StepProps) {
-  const [placeId, setPlaceId] = useState(data.url?.split("placeid=")[1] || "");
+  const [rawInput, setRawInput] = useState(data.url?.split("placeid=")[1] || "");
   const [businessName, setBusinessName] = useState(data.businessName || "");
   const [showTutorial, setShowTutorial] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [warningMsg, setWarningMsg] = useState<string | null>(null);
+
+  // Auto-validate and Extract Place ID on input change
+  useEffect(() => {
+    if (!rawInput.trim()) {
+      setErrorMsg(null);
+      setWarningMsg(null);
+      return;
+    }
+
+    const input = rawInput.trim();
+    setErrorMsg(null);
+    setWarningMsg(null);
+
+    // 1. Check if user pasted a full URL instead of just ID
+    if (input.includes("http")) {
+      // Try to extract placeid from URL parameters
+      try {
+        const urlObj = new URL(input);
+        const placeIdParam = urlObj.searchParams.get("placeid");
+        if (placeIdParam) {
+          setRawInput(placeIdParam); // Auto-replace input with the extracted ID
+          return;
+        }
+
+        // If it's a map link without placeid param, hard block (this is useless for our system)
+        if (input.includes("maps.app.goo.gl") || input.includes("google.com/maps")) {
+          setErrorMsg("Gunakan tool pencari di atas untuk mendapatkan Place ID, bukan link peta biasa.");
+          return;
+        }
+      } catch (e) {
+        // Invalid URL format
+        setErrorMsg("URL tidak valid.");
+        return;
+      }
+    }
+
+    // 2. Loose Validation (Just Warnings, won't block submit unless it's completely illogical)
+    // Most Google Place IDs start with ChIJ and are 27 chars, but we only HARD BLOCK if it's ridiculously short
+    if (input.length < 10) {
+      setErrorMsg("Place ID terlalu pendek. Pastikan Anda menyalin semuanya (biasanya sekitar 27 karakter).");
+    } else if (!input.startsWith("ChIJ")) {
+      setWarningMsg("Catatan: Place ID biasanya diawali dengan 'ChIJ'. Pastikan Anda memasukkan kode yang benar.");
+    }
+  }, [rawInput]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (placeId.trim() && businessName.trim()) {
-      // Merakit URL ajaib yang akan langsung membuka popup ulasan!
-      const finalUrl = `https://search.google.com/local/writereview?placeid=${placeId.trim()}`;
-      onNext({ url: finalUrl, businessName: businessName.trim() });
+
+    // JS Logic Validation
+    const finalPlaceId = rawInput.trim();
+    const finalName = businessName.trim();
+
+    if (!finalPlaceId || !finalName) {
+      setErrorMsg("Nama usaha dan Place ID tidak boleh kosong.");
+      return;
     }
+
+    if (errorMsg) {
+      return; // Stop ONLY if there's a hard error
+    }
+
+    // Generate the magical review URL
+    const finalUrl = `https://search.google.com/local/writereview?placeid=${finalPlaceId}`;
+    onNext({ url: finalUrl, businessName: finalName });
   };
+
+  // Determine if button should be disabled (Warnings don't disable the button!)
+  const isSubmitDisabled = !rawInput.trim() || !businessName.trim() || errorMsg !== null;
 
   return (
     <div className="w-full max-w-2xl py-4 md:py-8">
@@ -45,6 +106,7 @@ export function InputStep({ onNext, data }: StepProps) {
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
               placeholder="Contoh: Kopi Senja Nusantara"
+              maxLength={60}
               className="w-full bg-white border-2 border-[#0F0F0F] p-3.5 text-base md:text-lg font-bold focus:bg-[#F4F4F0] focus:outline-none focus:ring-2 focus:ring-[#FF4500] transition-colors placeholder:text-gray-400 placeholder:font-normal font-sans"
               required
             />
@@ -67,19 +129,52 @@ export function InputStep({ onNext, data }: StepProps) {
 
             <input
               type="text"
-              value={placeId}
-              onChange={(e) => setPlaceId(e.target.value)}
+              value={rawInput}
+              onChange={(e) => setRawInput(e.target.value)}
               placeholder="Contoh: ChIJxxxxxxxxxxxxxxxx"
-              className="w-full bg-white border-2 border-[#0F0F0F] p-3.5 text-sm md:text-base font-mono font-bold focus:bg-[#F4F4F0] focus:outline-none focus:ring-2 focus:ring-[#FF4500] transition-colors placeholder:text-gray-400 placeholder:font-normal"
+              maxLength={200}
+              className={`w-full bg-white border-2 p-3.5 text-sm md:text-base font-mono font-bold focus:outline-none focus:ring-2 transition-colors placeholder:text-gray-400 placeholder:font-normal
+                ${errorMsg ? 'border-red-500 focus:bg-red-50 focus:ring-red-500/20 text-red-700' : 'border-[#0F0F0F] focus:bg-[#F4F4F0] focus:ring-[#FF4500] text-[#0F0F0F]'}`}
               required
             />
+
+            {/* ERROR FEEDBACK */}
+            <AnimatePresence>
+              {errorMsg && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-red-600 font-medium text-xs flex items-start gap-1.5 mt-2"
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p>{errorMsg}</p>
+                </motion.div>
+              )}
+              {warningMsg && !errorMsg && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="text-amber-600 font-medium text-xs flex items-start gap-1.5 mt-2 bg-amber-50 p-2 border border-amber-200"
+                >
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p>{warningMsg}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+>>>>>>> 0544963 (Backup awal)
           </div>
 
           {/* ACTION BUTTON */}
           <div className="pt-4">
             <button
               type="submit"
+<<<<<<< HEAD
               disabled={!placeId.trim() || !businessName.trim()}
+=======
+              disabled={isSubmitDisabled}
+>>>>>>> 0544963 (Backup awal)
               className="w-full bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:bg-gray-300 disabled:border-gray-400 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-display font-bold text-xl py-4 border-2 border-[#0F0F0F] shadow-hard hover:shadow-hard-hover transition-all flex items-center justify-center gap-2 uppercase cursor-pointer"
             >
               <span>GENERATE DESAIN SIAP CETAK</span>
@@ -88,7 +183,11 @@ export function InputStep({ onNext, data }: StepProps) {
           </div>
         </form>
 
+<<<<<<< HEAD
         {/* TUTORIAL DROPDOWN (BAGAIMANA CARA MENCARI PLACE ID) */}
+=======
+        {/* TUTORIAL DROPDOWN */}
+>>>>>>> 0544963 (Backup awal)
         <AnimatePresence>
           {showTutorial && (
             <motion.div
