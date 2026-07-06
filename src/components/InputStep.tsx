@@ -208,7 +208,15 @@ export function InputStep({ onNext, data }: StepProps) {
                 <ol className="list-decimal pl-5 space-y-3 text-gray-800 font-medium text-xs md:text-sm">
                   <li>Buka website gratis: <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank" rel="noreferrer" className="text-blue-600 font-bold underline hover:text-[var(--color-accent)]">Google Place ID Finder</a></li>
                   <li>Ketik nama toko / bisnis Anda di kotak pencarian peta tersebut.</li>
-                  <li>Pilih toko Anda. Sebuah balon informasi akan muncul di peta. <strong>Salin teks yang muncul setelah tulisan "Place ID"</strong> (biasanya dimulai dengan huruf <code className="bg-white font-mono px-1 py-0.5 border border-[#0F0F0F]">ChIJ...</code>).</li>
+                  <li>
+                    Pilih toko Anda. Sebuah balon informasi akan muncul di peta. <strong>Salin teks yang muncul setelah tulisan "Place ID"</strong> (biasanya dimulai dengan huruf <code className="bg-white font-mono px-1 py-0.5 border border-[#0F0F0F]">ChIJ...</code>).
+
+                    {/* GAMBAR CONTOH PLACE ID - DIBAGI 2 BAGIAN UNTUK RESPONSIVITAS MOBILE */}
+                    <div className="mt-4 flex flex-col gap-3 w-full max-w-[400px] md:max-w-[480px]">
+                      <img src="/placeid-bagian1.webp" alt="Langkah 1: Cari Nama Toko" className="w-full h-auto block drop-shadow-sm rounded-md" />
+                      <img src="/placeid-bagian2.webp" alt="Langkah 2: Salin Place ID" className="w-full h-auto block drop-shadow-sm rounded-md" />
+                    </div>
+                  </li>
                 </ol>
               </div>
             </motion.div>
