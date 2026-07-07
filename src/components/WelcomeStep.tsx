@@ -139,7 +139,7 @@ export function WelcomeStep({ onNext }: StepProps) {
         </motion.div>
 
         <motion.div variants={item} className="bg-[var(--color-ink)] text-white p-6 border-2 border-[var(--color-ink)] shadow-hard flex flex-col h-full relative">
-          <div className="absolute top-4 right-4 text-[var(--color-accent)] font-mono font-bold">02</div>
+          <div className="absolute top-4 right-4 text-[var(--color-accent)] font-mono font-bold"></div>
           <div className="w-10 h-10 bg-[var(--color-accent)] border-2 border-[var(--color-ink)] flex items-center justify-center mb-4">
             <QrCode className="w-5 h-5 text-white" />
           </div>
